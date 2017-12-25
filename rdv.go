@@ -1,7 +1,8 @@
 package rendezvous
 
 type Rendezvous struct {
-	nodes []string
+	nodes map[string]int
+	nstr  []string
 	nhash []uint64
 	hash  Hasher
 }
@@ -10,13 +11,15 @@ type Hasher func(s string) uint64
 
 func New(nodes []string, hash Hasher) *Rendezvous {
 	r := &Rendezvous{
-		nodes: make([]string, len(nodes)),
+		nodes: make(map[string]int, len(nodes)),
+		nstr:  make([]string, len(nodes)),
 		nhash: make([]uint64, len(nodes)),
 		hash:  hash,
 	}
 
 	for i, n := range nodes {
-		r.nodes[i] = n
+		r.nodes[n] = i
+		r.nstr[i] = n
 		r.nhash[i] = hash(n)
 	}
 
@@ -36,15 +39,29 @@ func (r *Rendezvous) Lookup(k string) string {
 		}
 	}
 
-	return r.nodes[midx]
+	return r.nstr[midx]
 }
 
 func (r *Rendezvous) Add(node string) {
-	r.nodes = append(r.nodes, node)
+	r.nodes[node] = len(r.nstr)
+	r.nstr = append(r.nstr, node)
 	r.nhash = append(r.nhash, r.hash(node))
 }
 
-func (r *Rendezvous) Remove(n int) {
-	r.nodes = append(r.nodes[:n], r.nodes[n+1:]...)
-	r.nhash = append(r.nhash[:n], r.nhash[n+1:]...)
+func (r *Rendezvous) Remove(node string) {
+	// find index of node to remove
+	nidx := r.nodes[node]
+
+	// remove from the slices
+	l := len(r.nstr)
+	r.nstr[nidx] = r.nstr[l]
+	r.nstr = r.nstr[:l]
+
+	r.nhash[nidx] = r.nhash[l]
+	r.nhash = r.nhash[:l]
+
+	// update the map
+	delete(r.nodes, node)
+	moved := r.nstr[nidx]
+	r.nodes[moved] = nidx
 }
