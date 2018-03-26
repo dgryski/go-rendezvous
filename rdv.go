@@ -30,10 +30,10 @@ func (r *Rendezvous) Lookup(k string) string {
 	khash := r.hash(k)
 
 	var midx int
-	var mhash = khash ^ r.nhash[0]
+	var mhash = xorshiftMult64(khash ^ r.nhash[0])
 
 	for i, nhash := range r.nhash[1:] {
-		if h := khash ^ nhash; h < mhash {
+		if h := xorshiftMult64(khash ^ nhash); h < mhash {
 			midx = i + 1
 			mhash = h
 		}
@@ -64,4 +64,11 @@ func (r *Rendezvous) Remove(node string) {
 	delete(r.nodes, node)
 	moved := r.nstr[nidx]
 	r.nodes[moved] = nidx
+}
+
+func xorshiftMult64(x uint64) uint64 {
+	x ^= x >> 12 // a
+	x ^= x << 25 // b
+	x ^= x >> 27 // c
+	return x * 2685821657736338717
 }
