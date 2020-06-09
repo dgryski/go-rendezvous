@@ -27,6 +27,11 @@ func New(nodes []string, hash Hasher) *Rendezvous {
 }
 
 func (r *Rendezvous) Lookup(k string) string {
+	// short-circuit if we're empty
+	if len(r.nodes) == 0 {
+		return ""
+	}
+
 	khash := r.hash(k)
 
 	var midx int
