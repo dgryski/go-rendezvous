@@ -1,16 +1,13 @@
 package rendezvous
 
 import (
-	"hash/maphash"
+	"hash/fnv"
 	"testing"
 )
 
-var hseed = maphash.MakeSeed()
-
 func hashString(s string) uint64 {
-	var h maphash.Hash
-	h.SetSeed(hseed)
-	h.WriteString(s)
+	h := fnv.New64a()
+	h.Write([]byte(s))
 	return h.Sum64()
 }
 
