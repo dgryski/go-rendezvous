@@ -1,5 +1,7 @@
 package rendezvous
 
+import "math"
+
 type Rendezvous struct {
 	nodes map[string]int
 	nstr  []string
@@ -33,18 +35,44 @@ func (r *Rendezvous) Lookup(k string) string {
 	}
 
 	khash := r.hash(k)
-
-	var midx int
-	var mhash = xorshiftMult64(khash ^ r.nhash[0])
+	midx := 0
+	mhash := xorshiftMult64(khash ^ r.nhash[0])
 
 	for i, nhash := range r.nhash[1:] {
 		if h := xorshiftMult64(khash ^ nhash); h > mhash {
-			midx = i + 1
-			mhash = h
+			midx, mhash = i+1, h
 		}
 	}
 
 	return r.nstr[midx]
+}
+
+func (r *Rendezvous) LookupN(k string, n int) []string {
+	if len(r.nodes) == 0 || n <= 0 || n > len(r.nodes) {
+		return nil
+	}
+
+	khash := r.hash(k)
+	hashes := make([]uint64, len(r.nodes))
+
+	for i, nhash := range r.nhash {
+		hashes[i] = xorshiftMult64(khash ^ nhash)
+	}
+
+	nodes := make([]string, n)
+	mhash := uint64(math.MaxUint64) // max hash
+
+	for i := 0; i < n; i++ {
+		hash, idx := uint64(0), 0
+		for j, h := range hashes {
+			if h > hash && h < mhash {
+				idx, hash = j, h
+			}
+		}
+		nodes[i], mhash = r.nstr[idx], hash
+	}
+
+	return nodes
 }
 
 func (r *Rendezvous) Add(node string) {
