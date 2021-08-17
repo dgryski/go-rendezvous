@@ -63,13 +63,13 @@ func (r *Rendezvous) LookupN(k string, n int) []string {
 	mhash := uint64(math.MaxUint64) // max hash
 
 	for i := 0; i < n; i++ {
-		hash, idx := uint64(0), 0
+		midx := 0
 		for j, h := range hashes {
-			if h > hash && h < mhash {
-				idx, hash = j, h
+			if h > hashes[midx] && h < mhash {
+				midx = j
 			}
 		}
-		nodes[i], mhash = r.nstr[idx], hash
+		nodes[i], mhash = r.nstr[midx], hashes[midx]
 	}
 
 	return nodes
