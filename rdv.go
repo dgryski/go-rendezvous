@@ -75,12 +75,8 @@ func (r *Rendezvous) LookupN(k string, n int) []string {
 	return nodes
 }
 
-func (r *Rendezvous) Nodes() map[string]struct{} {
-	nodes := make(map[string]struct{}, len(r.nstr))
-	for _, node := range r.nstr {
-		nodes[node] = struct{}{}
-	}
-	return nodes
+func (r *Rendezvous) Nodes() []string {
+	return r.nstr
 }
 
 func (r *Rendezvous) Add(node string) {
